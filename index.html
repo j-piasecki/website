@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hi!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Reddit+Mono:wght@200..900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        font-family: "Reddit Mono", monospace;
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+
+        background: black;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+
+      h1 {
+        padding-bottom: 10%;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Hi! I'm Kuba</h1>
+  </body>
+
+  <script>
+    window.onload = () => {
+      const h1 = document.querySelector("h1");
+      const text = h1.innerText;
+      h1.innerText = "";
+
+      let nextChar = 0;
+      let lastTime = 0;
+      let hue = 0;
+      let lightness = 100;
+
+      function updateColor(timestamp) {
+        if (lastTime === 0) {
+          lastTime = timestamp;
+        }
+        const delta = timestamp - lastTime;
+        lastTime = timestamp;
+
+        hue = (hue + delta / 50) % 360;
+        lightness = Math.max(50, lightness - delta / 200);
+
+        h1.style.color = `hsl(${hue}, 100%, ${lightness}%)`;
+        requestAnimationFrame(updateColor);
+      }
+
+      const typeInterval = setInterval(() => {
+        h1.innerText = text.slice(0, nextChar);
+        nextChar++;
+        if (nextChar > text.length) {
+          clearInterval(typeInterval);
+          requestAnimationFrame(updateColor);
+        }
+      }, 100);
+    };
+  </script>
+</html>
