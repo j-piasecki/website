@@ -1,76 +1,602 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Hi!</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Reddit+Mono:wght@200..900&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      html,
-      body {
-        font-family: "Reddit Mono", monospace;
-        font-optical-sizing: auto;
-        font-weight: 400;
-        font-style: normal;
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jakub Piasecki</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        background: black;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-      }
+    body {
+      font-family: sans-serif;
+      background: #f5f0eb;
+      color: #2a2a2a;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.6s ease;
+    }
 
-      h1 {
-        padding-bottom: 10%;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Hi! I'm Kuba</h1>
-  </body>
+    body.dark-mode {
+      background: #000;
+      overflow: hidden;
+    }
+
+    /* ── Site content ── */
+    #site-content {
+      transition: opacity 0.5s ease;
+      padding-bottom: 60px;
+    }
+
+    #site-content.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ── Player section ── */
+    #player-section {
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px 20px;
+      position: relative;
+      z-index: 10;
+    }
+
+    #player-container {
+      position: relative;
+      width: 340px;
+      height: 220px;
+    }
+
+    #player-svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+    }
+
+    /* ── Disc ── */
+    #disc {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      cursor: grab;
+      z-index: 100;
+      user-select: none;
+      touch-action: none;
+      transition: box-shadow 0.3s;
+    }
+
+    #disc.on-player {
+      position: absolute;
+      /* Platter center is SVG (135,118) in a 340x220 container, minus half disc size (70) */
+      left: 65px;
+      top: 48px;
+      animation: spin 4s linear infinite;
+    }
+
+    #disc.free {
+      position: fixed;
+    }
+
+    #disc:active { cursor: grabbing; }
+
+    #disc-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      overflow: hidden;
+      position: relative;
+      border: 4px solid #1a1a1a;
+      box-shadow: 0 0 0 3px #333, 0 0 0 6px #555, 0 2px 15px rgba(0,0,0,0.4);
+    }
+
+    #disc-inner::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 18px;
+      height: 18px;
+      background: #333;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      border: 2px solid #555;
+      z-index: 2;
+    }
+
+    #disc-inner img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── DVD Screensaver ── */
+    #dvd-screensaver {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      display: none;
+      pointer-events: none;
+    }
+
+    #dvd-screensaver.active {
+      display: block;
+    }
+
+    #dvd-logo {
+      position: absolute;
+      width: 220px;
+      filter: invert(1);
+    }
+
+    /* ── Page content below player ── */
+    .content {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 30px 24px;
+    }
+
+    .content h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .content .subtitle {
+      color: #666;
+      font-size: 1.1rem;
+      margin-bottom: 32px;
+    }
+
+    .content h2 {
+      font-size: 1.3rem;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 6px;
+    }
+
+    .content p {
+      line-height: 1.7;
+      margin-bottom: 14px;
+    }
+
+    .content a {
+      color: #c2185b;
+      text-decoration: none;
+      border-bottom: 1px solid #e091ab;
+    }
+
+    .content a:hover {
+      color: #880e4f;
+    }
+
+    .item-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .item-list li {
+      margin-bottom: 16px;
+    }
+
+    .item-list .title {
+      font-weight: 600;
+    }
+
+    .item-list .desc {
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    .item-list .sub-list {
+      list-style: none;
+      padding: 4px 0 0 16px;
+    }
+
+    .item-list .sub-list li {
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+
+    .item-list .sub-list li::before {
+      content: '↳ ';
+      color: #aaa;
+    }
+
+    .find-me a {
+      margin-right: 16px;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- DVD Screensaver (behind disc, above content) -->
+  <div id="dvd-screensaver">
+    <img id="dvd-logo" src="dvd.png" alt="DVD">
+  </div>
+
+  <!-- Player section (always visible) -->
+  <div id="player-section">
+    <div id="player-container">
+      <!-- SVG Record Player -->
+      <svg id="player-svg" viewBox="0 0 340 220" xmlns="http://www.w3.org/2000/svg">
+        <!-- Body -->
+        <rect x="4" y="20" width="332" height="190" rx="12" fill="#3a3a3a" stroke="#222" stroke-width="2"/>
+        <rect x="10" y="26" width="320" height="178" rx="9" fill="#4a4a4a"/>
+        <!-- Wood trim -->
+        <rect x="4" y="20" width="332" height="190" rx="12" fill="none" stroke="#6b4226" stroke-width="3" opacity="0.4"/>
+        <!-- Platter recess -->
+        <circle cx="135" cy="118" r="82" fill="#2a2a2a"/>
+        <circle cx="135" cy="118" r="78" fill="#333" stroke="#444" stroke-width="1"/>
+        <!-- Platter grooves -->
+        <circle cx="135" cy="118" r="72" fill="none" stroke="#3a3a3a" stroke-width="0.5"/>
+        <circle cx="135" cy="118" r="60" fill="none" stroke="#3a3a3a" stroke-width="0.5"/>
+        <circle cx="135" cy="118" r="48" fill="none" stroke="#3a3a3a" stroke-width="0.5"/>
+        <circle cx="135" cy="118" r="36" fill="none" stroke="#3a3a3a" stroke-width="0.5"/>
+        <!-- Spindle -->
+        <circle cx="135" cy="118" r="4" fill="#888" stroke="#666" stroke-width="1"/>
+        <!-- Tonearm base -->
+        <circle cx="280" cy="55" r="14" fill="#555" stroke="#666" stroke-width="1.5"/>
+        <circle cx="280" cy="55" r="6" fill="#777" stroke="#888" stroke-width="1"/>
+        <!-- Tonearm -->
+        <line x1="280" y1="55" x2="220" y2="50" stroke="#999" stroke-width="4" stroke-linecap="round"/>
+        <line x1="220" y1="50" x2="180" y2="75" stroke="#999" stroke-width="3" stroke-linecap="round"/>
+        <!-- Tonearm head -->
+        <rect x="174" y="72" width="14" height="8" rx="2" fill="#aaa" transform="rotate(-25, 180, 75)"/>
+        <!-- Controls -->
+        <circle cx="280" cy="140" r="8" fill="#222" stroke="#555" stroke-width="1"/>
+        <circle cx="280" cy="140" r="3" fill="#8b5e3c"/>
+        <!-- Power LED -->
+        <circle cx="280" cy="170" r="3" fill="#5a5" opacity="0.9"/>
+        <!-- Speed switch -->
+        <rect x="300" y="130" width="16" height="28" rx="3" fill="#333" stroke="#555" stroke-width="1"/>
+        <rect x="303" y="133" width="10" height="10" rx="2" fill="#555"/>
+        <!-- Label -->
+        <text x="280" y="198" text-anchor="middle" fill="#666" font-size="7" font-family="sans-serif">PIASECKI HI-FI</text>
+      </svg>
+
+      <!-- The disc -->
+      <div id="disc" class="on-player">
+        <div id="disc-inner">
+          <img src="profile.jpeg" alt="Jakub" draggable="false">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Regular site content -->
+  <div id="site-content">
+    <div class="content">
+      <h1>Jakub Piasecki</h1>
+      <p class="subtitle">React Native Open Source @ <a href="https://swmansion.com">Software Mansion</a></p>
+
+      <p>
+        Hi! I'm Kuba. I'm a software engineer based in Krakow, Poland.
+        I spend most of my time working on React Native open source: gestures, animations, and making things feel right on mobile.
+      </p>
+
+      <h2>I made this</h2>
+      <ul class="item-list">
+        <li>
+          <a class="title" href="https://split.rest">split.rest</a>
+          <div class="desc">An advanced app for splitting expenses with friends.</div>
+        </li>
+        <li>
+          <a class="title" href="https://kaleido.jpiasecki.com/">Kaleido</a>
+          <div class="desc">A 3-in-a-row game where squares cycle colors.</div>
+        </li>
+        <li>
+          <a class="title" href="https://github.com/j-piasecki/expo-material-dynamic-colors">expo-material-dynamic-colors</a>
+          <div class="desc">Expo module for Material You dynamic colors on Android.</div>
+        </li>
+      </ul>
+
+      <h2>I worked on this</h2>
+      <ul class="item-list">
+        <li>
+          <a class="title" href="https://github.com/software-mansion/react-native-gesture-handler">react-native-gesture-handler</a>
+          <div class="desc">Core contributor - platform-native touch and gesture system for React Native.</div>
+        </li>
+        <li>
+          <a class="title" href="https://github.com/software-mansion/react-native-reanimated">react-native-reanimated</a>
+          <div class="desc">Contributor - powerful animation library reimplemented for React Native.</div>
+        </li>
+      </ul>
+
+      <h2>I helped with this</h2>
+      <ul class="item-list">
+        <li>
+          <a class="title" href="https://github.com/facebook/react-native">react-native</a>
+          <div class="desc">Core contributor - fixing numerous New Architecture issues and implementing new features.</div>
+          <ul class="sub-list">
+            <li><a href="https://swmansion.com/blog/welcoming-the-next-generation-of-hermes-67ab5679e184">Welcoming the Next Generation of Hermes</a></li>
+            <li><a href="https://reactnative.dev/blog/2025/06/12/moving-towards-a-stable-javascript-api">Moving Towards a Stable JavaScript API</a></li>
+          </ul>
+        </li>
+        <li>
+          <a class="title" href="https://github.com/Expensify/App">Expensify</a>
+          <div class="desc">Migrating the New Expensify app to the New Architecture.</div>
+          <ul class="sub-list">
+            <li><a href="https://swmansion.com/blog/sunrising-new-architecture-in-the-new-expensify-app-729d237a02f5">Sunrising New Architecture in the New Expensify App</a></li>
+          </ul>
+        </li>
+      </ul>
+
+      <h2>I wrote this</h2>
+      <ul class="item-list">
+        <li>
+          <a class="title" href="https://swmansion.com/blog/react-native-new-architecture-key-performance-boosts-4ce68cc3cc9f">React Native New Architecture: Key Performance Boosts</a>
+        </li>
+        <li>
+          <a class="title" href="https://swmansion.com/blog/react-natives-new-architecture-the-tricky-parts-1-2-bb0c16950f2d">React Native's New Architecture: The Tricky Parts (1/2)</a>
+        </li>
+        <li>
+          <a class="title" href="https://swmansion.com/blog/react-natives-new-architecture-the-tricky-parts-2-2-ac5f2adf22ec">React Native's New Architecture: The Tricky Parts (2/2)</a>
+        </li>
+        <li>
+          <a class="title" href="https://swmansion.com/blog/introduction-to-manual-gestures-and-touch-events-a1dde7c98612">Introduction to Manual Gestures and Touch Events</a>
+        </li>
+      </ul>
+
+      <h2>I'm here</h2>
+      <p class="find-me">
+        <a href="https://github.com/j-piasecki">GitHub</a>
+        <a href="https://twitter.com/breskin67">Twitter</a>
+        <a href="https://www.linkedin.com/in/jakub-piasecki-27a91321b/">LinkedIn</a>
+        <a href="https://bsky.app/profile/jpiasecki.com">Bluesky</a>
+        <a href="https://jpiasecki.com">Website</a>
+      </p>
+    </div>
+  </div>
 
   <script>
-    window.onload = () => {
-      const h1 = document.querySelector("h1");
-      const text = h1.innerText;
-      h1.innerText = "";
+    const disc = document.getElementById('disc');
+    const playerContainer = document.getElementById('player-container');
+    const playerSection = document.getElementById('player-section');
+    const siteContent = document.getElementById('site-content');
+    const dvdScreensaver = document.getElementById('dvd-screensaver');
+    const dvdLogo = document.getElementById('dvd-logo');
+    const body = document.body;
 
-      let nextChar = 0;
-      let lastTime = 0;
-      let hue = 0;
-      let lightness = 100;
+    // ── State ──
+    let isDragging = false;
+    let isOnPlayer = true;
+    let discX, discY;
+    let velX = 0, velY = 0;
+    let lastMouseX = 0, lastMouseY = 0;
+    let lastMoveTime = 0;
+    let offsetX = 0, offsetY = 0;
+    let rotation = 0;
+    let animFrame = null;
 
-      function updateColor(timestamp) {
-        if (lastTime === 0) {
-          lastTime = timestamp;
-        }
-        const delta = timestamp - lastTime;
-        lastTime = timestamp;
+    // DVD screensaver state
+    let dvdX = 100, dvdY = 100;
+    let dvdVX = 1, dvdVY = 0.8;
+    let dvdAnimFrame = null;
 
-        hue = (hue + delta / 50) % 360;
-        lightness = Math.max(50, lightness - delta / 200);
+    // ── Platter center in viewport coords ──
+    function getPlatterCenter() {
+      const containerRect = playerContainer.getBoundingClientRect();
+      return {
+        x: containerRect.left + (135 / 340) * containerRect.width,
+        y: containerRect.top + (118 / 220) * containerRect.height
+      };
+    }
 
-        h1.style.color = `hsl(${hue}, 100%, ${lightness}%)`;
-        requestAnimationFrame(updateColor);
+    function snapToPlayer() {
+      // Move disc back into the player container as absolute-positioned child
+      disc.classList.remove('free');
+      disc.classList.add('on-player');
+      disc.style.left = '';
+      disc.style.top = '';
+      disc.style.transform = '';
+      playerContainer.appendChild(disc);
+      isOnPlayer = true;
+      velX = 0;
+      velY = 0;
+
+      // Restore site
+      siteContent.classList.remove('hidden');
+      body.classList.remove('dark-mode');
+      dvdScreensaver.classList.remove('active');
+      if (dvdAnimFrame) cancelAnimationFrame(dvdAnimFrame);
+      dvdAnimFrame = null;
+      if (animFrame) cancelAnimationFrame(animFrame);
+      animFrame = null;
+    }
+
+    function removeFromPlayer() {
+      // Capture current position in viewport before reparenting
+      const rect = disc.getBoundingClientRect();
+
+      // Store current visual rotation from the spin animation
+      const style = getComputedStyle(disc);
+      const transform = style.transform;
+      if (transform && transform !== 'none') {
+        const values = transform.split('(')[1].split(')')[0].split(',');
+        const a = parseFloat(values[0]);
+        const b = parseFloat(values[1]);
+        rotation = Math.atan2(b, a);
       }
 
-      const typeInterval = setInterval(() => {
-        h1.innerText = text.slice(0, nextChar);
-        nextChar++;
-        if (nextChar > text.length) {
-          clearInterval(typeInterval);
-          requestAnimationFrame(updateColor);
+      // Reparent to body so it's free from the player container
+      disc.classList.remove('on-player');
+      disc.classList.add('free');
+      document.body.appendChild(disc);
+      disc.style.left = rect.left + 'px';
+      disc.style.top = rect.top + 'px';
+      disc.style.transform = `rotate(${rotation}rad)`;
+      isOnPlayer = false;
+
+      // Scroll to top and activate screensaver mode
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      siteContent.classList.add('hidden');
+      body.classList.add('dark-mode');
+      dvdScreensaver.classList.add('active');
+      startDVDScreensaver();
+    }
+
+    // ── Drag handling ──
+    function onPointerDown(e) {
+      e.preventDefault();
+      isDragging = true;
+      const rect = disc.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      lastMoveTime = performance.now();
+      velX = 0;
+      velY = 0;
+
+      if (isOnPlayer) removeFromPlayer();
+      if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+
+      disc.setPointerCapture(e.pointerId);
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+
+      const now = performance.now();
+      const dt = now - lastMoveTime;
+
+      if (dt > 0) {
+        const newVX = (e.clientX - lastMouseX) / dt * 8;
+        const newVY = (e.clientY - lastMouseY) / dt * 8;
+        velX = velX * 0.6 + newVX * 0.4;
+        velY = velY * 0.6 + newVY * 0.4;
+      }
+
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      lastMoveTime = now;
+
+      discX = e.clientX - offsetX;
+      discY = e.clientY - offsetY;
+      disc.style.left = discX + 'px';
+      disc.style.top = discY + 'px';
+    }
+
+    function onPointerUp(e) {
+      if (!isDragging) return;
+      isDragging = false;
+
+      discX = parseFloat(disc.style.left);
+      discY = parseFloat(disc.style.top);
+
+      // Check if close to player platter - snap back
+      const center = getPlatterCenter();
+      const dx = (discX + 70) - center.x;
+      const dy = (discY + 70) - center.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < 60) {
+        snapToPlayer();
+        return;
+      }
+
+      // Start physics
+      startPhysics();
+    }
+
+    disc.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+
+    // ── Physics ──
+    const GRAVITY = 0.35;
+    const BOUNCE = 0.4;
+    const FRICTION = 0.99;
+    const MAX_VEL = 12;
+    const DISC_SIZE = 140;
+
+    function startPhysics() {
+      if (animFrame) cancelAnimationFrame(animFrame);
+
+      // Clamp initial throw velocity
+      velX = Math.max(-MAX_VEL, Math.min(MAX_VEL, velX));
+      velY = Math.max(-MAX_VEL, Math.min(MAX_VEL, velY));
+
+      function step() {
+        if (isDragging || isOnPlayer) return;
+
+        velY += GRAVITY;
+        velX *= FRICTION;
+        velY *= FRICTION;
+
+        discX += velX;
+        discY += velY;
+
+        const maxX = window.innerWidth - DISC_SIZE;
+        const maxY = window.innerHeight - DISC_SIZE;
+
+        if (discX < 0) {
+          discX = 0;
+          velX = -velX * BOUNCE;
+        } else if (discX > maxX) {
+          discX = maxX;
+          velX = -velX * BOUNCE;
         }
-      }, 100);
-    };
+
+        if (discY < 0) {
+          discY = 0;
+          velY = -velY * BOUNCE;
+        } else if (discY > maxY) {
+          discY = maxY;
+          velY = -velY * BOUNCE;
+          velX *= 0.94;
+          if (Math.abs(velY) < 0.8) velY = 0;
+        }
+
+        rotation += velX * 0.01;
+        disc.style.transform = `rotate(${rotation}rad)`;
+        disc.style.left = discX + 'px';
+        disc.style.top = discY + 'px';
+
+        animFrame = requestAnimationFrame(step);
+      }
+
+      animFrame = requestAnimationFrame(step);
+    }
+
+    // ── DVD Screensaver ──
+    function startDVDScreensaver() {
+      const logoW = 220;
+      const logoH = 120;
+      dvdX = Math.random() * (window.innerWidth - logoW);
+      dvdY = Math.random() * (window.innerHeight - logoH);
+      dvdVX = (Math.random() > 0.5 ? 1 : -1) * (0.7 + Math.random() * 0.5);
+      dvdVY = (Math.random() > 0.5 ? 1 : -1) * (0.7 + Math.random() * 0.5);
+
+      function dvdStep() {
+        if (isOnPlayer) return;
+
+        dvdX += dvdVX;
+        dvdY += dvdVY;
+
+        if (dvdX <= 0) { dvdX = 0; dvdVX = -dvdVX; }
+        if (dvdX >= window.innerWidth - logoW) { dvdX = window.innerWidth - logoW; dvdVX = -dvdVX; }
+        if (dvdY <= 0) { dvdY = 0; dvdVY = -dvdVY; }
+        if (dvdY >= window.innerHeight - logoH) { dvdY = window.innerHeight - logoH; dvdVY = -dvdVY; }
+
+        dvdLogo.style.left = dvdX + 'px';
+        dvdLogo.style.top = dvdY + 'px';
+
+        dvdAnimFrame = requestAnimationFrame(dvdStep);
+      }
+
+      dvdAnimFrame = requestAnimationFrame(dvdStep);
+    }
   </script>
+</body>
 </html>
